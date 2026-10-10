@@ -93,6 +93,8 @@ pub struct PopupsRule {
     #[knuffel(child)]
     pub geometry_corner_radius: Option<CornerRadius>,
     #[knuffel(child, default)]
+    pub shadow: ShadowRule,
+    #[knuffel(child, default)]
     pub background_effect: BackgroundEffectRule,
 }
 
@@ -104,6 +106,9 @@ pub struct ResolvedPopupsRules {
 
     /// Corner radius to assume the popups have.
     pub geometry_corner_radius: Option<CornerRadius>,
+
+    /// Shadow configuration for popups.
+    pub shadow: ShadowRule,
 
     /// Background effect configuration for popups.
     pub background_effect: BackgroundEffect,
@@ -117,6 +122,7 @@ impl MergeWith<PopupsRule> for ResolvedPopupsRules {
         if let Some(x) = part.geometry_corner_radius {
             self.geometry_corner_radius = Some(x);
         }
+        self.shadow.merge_with(&part.shadow);
         self.background_effect.merge_with(&part.background_effect);
     }
 }

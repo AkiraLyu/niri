@@ -9,7 +9,7 @@ use smithay::wayland::shell::wlr_layer::{ExclusiveZone, Layer};
 
 use super::ResolvedLayerRules;
 use crate::animation::Clock;
-use crate::layout::shadow::Shadow;
+use crate::layout::shadow::{self, Shadow};
 use crate::niri_render_elements;
 use crate::render_helpers::background_effect::BackgroundEffectElement;
 use crate::render_helpers::renderer::NiriRenderer;
@@ -44,6 +44,9 @@ pub struct MappedLayer {
 
     /// The blur config, passed for background effect rendering.
     blur_config: niri_config::Blur,
+
+    /// The base shadow config, passed for popup shadow rendering.
+    shadow_config: niri_config::Shadow,
 
     /// The view size for the layer surface's output.
     view_size: Size<f64, Logical>,
@@ -89,6 +92,7 @@ impl MappedLayer {
             scale,
             shadow: Shadow::new(shadow_config),
             blur_config: config.blur,
+            shadow_config: config.layout.shadow,
             clock,
         }
     }
@@ -101,6 +105,7 @@ impl MappedLayer {
         self.shadow.update_config(shadow_config);
 
         self.blur_config = config.blur;
+        self.shadow_config = config.layout.shadow;
     }
 
     pub fn update_shaders(&mut self) {
@@ -298,6 +303,18 @@ impl MappedLayer {
             );
 
             let geometry = Rectangle::new(location + offset.to_f64(), popup_geo.size.to_f64());
+            shadow::render_for_popup(
+                ctx.renderer,
+                surface,
+                geometry,
+                self.scale,
+                alpha,
+                true,
+                self.shadow_config,
+                popup_rules,
+                &mut |elem| push(elem.into()),
+            );
+
             let surface_off = popup_geo.loc.upscale(-1).to_f64();
             let surface_anim_scale = Scale::from(1.);
             let mut effect = popup_rules.background_effect;

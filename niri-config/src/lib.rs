@@ -925,11 +925,23 @@ mod tests {
                 }
 
                 pinch-sensitivity 1.2
+
+                popups {
+                    shadow {
+                        on
+                    }
+                }
             }
 
             layer-rule {
                 match namespace="^notifications$"
                 block-out-from "screencast"
+
+                popups {
+                    shadow {
+                        off
+                    }
+                }
             }
 
             binds {
@@ -1925,6 +1937,16 @@ mod tests {
                     popups: PopupsRule {
                         opacity: None,
                         geometry_corner_radius: None,
+                        shadow: ShadowRule {
+                            off: false,
+                            on: true,
+                            offset: None,
+                            softness: None,
+                            spread: None,
+                            draw_behind_window: None,
+                            color: None,
+                            inactive_color: None,
+                        },
                         background_effect: BackgroundEffectRule {
                             xray: None,
                             blur: None,
@@ -1976,6 +1998,16 @@ mod tests {
                     popups: PopupsRule {
                         opacity: None,
                         geometry_corner_radius: None,
+                        shadow: ShadowRule {
+                            off: true,
+                            on: false,
+                            offset: None,
+                            softness: None,
+                            spread: None,
+                            draw_behind_window: None,
+                            color: None,
+                            inactive_color: None,
+                        },
                         background_effect: BackgroundEffectRule {
                             xray: None,
                             blur: None,

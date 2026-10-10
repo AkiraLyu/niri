@@ -62,6 +62,7 @@ use crate::niri_render_elements;
 use crate::render_helpers::background_effect::BackgroundEffectElement;
 use crate::render_helpers::offscreen::OffscreenData;
 use crate::render_helpers::renderer::NiriRenderer;
+use crate::render_helpers::shadow::ShadowRenderElement;
 use crate::render_helpers::snapshot::RenderSnapshot;
 use crate::render_helpers::solid_color::{SolidColorBuffer, SolidColorRenderElement};
 use crate::render_helpers::texture::TextureBuffer;
@@ -114,6 +115,7 @@ niri_render_elements! {
     LayoutElementRenderElement<R> => {
         Wayland = WaylandSurfaceRenderElement<R>,
         SolidColor = SolidColorRenderElement,
+        Shadow = ShadowRenderElement,
         BackgroundEffect = BackgroundEffectElement,
     }
 }
@@ -136,8 +138,12 @@ pub trait LayoutElement {
     fn id(&self) -> &Self::Id;
 
     /// Updates the config for the element.
-    fn update_config(&mut self, blur_config: niri_config::Blur) {
-        let _ = blur_config;
+    fn update_config(
+        &mut self,
+        blur_config: niri_config::Blur,
+        shadow_config: niri_config::Shadow,
+    ) {
+        let _ = (blur_config, shadow_config);
     }
 
     /// Visual size of the element.
