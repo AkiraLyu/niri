@@ -426,6 +426,8 @@ impl Thumbnail {
                 error!("background effect clipping is unimplemented");
                 elem.into()
             }
+            // Popup shadows aren't part of window thumbnails.
+            elem @ LayoutElementRenderElement::Shadow(_) => elem.into(),
         };
 
         let downscale = move |elem| {

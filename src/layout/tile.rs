@@ -260,7 +260,8 @@ impl<W: LayoutElement> Tile<W> {
         let shadow_config = self.options.layout.shadow.merged_with(&rules.shadow);
         self.shadow.update_config(shadow_config);
 
-        self.window.update_config(self.options.blur);
+        self.window
+            .update_config(self.options.blur, self.options.layout.shadow);
     }
 
     pub fn update_shaders(&mut self) {
@@ -1267,6 +1268,8 @@ impl<W: LayoutElement> Tile<W> {
                     error!("background effect clipping is unimplemented");
                     elem.into()
                 }
+                // Popup shadows are rendered separately and don't need clipping.
+                elem @ LayoutElementRenderElement::Shadow(_) => elem.into(),
             };
 
             if clip_to_geometry && clip_shader.is_some() {

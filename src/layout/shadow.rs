@@ -1,10 +1,68 @@
+use std::cell::RefCell;
 use std::iter::zip;
 
-use niri_config::CornerRadius;
+use niri_config::utils::MergeWith as _;
+use niri_config::{CornerRadius, ResolvedPopupsRules};
+use smithay::desktop::utils::bbox_from_surface_tree;
+use smithay::reexports::wayland_server::protocol::wl_surface::WlSurface;
 use smithay::utils::{Logical, Point, Rectangle, Size};
+use smithay::wayland::compositor::with_states;
 
 use crate::render_helpers::renderer::NiriRenderer;
 use crate::render_helpers::shadow::ShadowRenderElement;
+use crate::utils::surface_geo;
+
+/// Renders a popup shadow, caching its render elements on the surface.
+#[allow(clippy::too_many_arguments)]
+pub fn render_for_popup(
+    renderer: &mut impl NiriRenderer,
+    surface: &WlSurface,
+    mut geometry: Rectangle<f64, Logical>,
+    scale: f64,
+    alpha: f32,
+    is_active: bool,
+    mut config: niri_config::Shadow,
+    rules: ResolvedPopupsRules,
+    push: &mut dyn FnMut(ShadowRenderElement),
+) {
+    // Like layer surfaces, popup shadows need to be explicitly enabled.
+    config.on = false;
+    config.merge_with(&rules.shadow);
+    if !config.on {
+        return;
+    }
+
+    // Without an explicit window geometry, use the entire surface tree.
+    if geometry.size.is_empty() {
+        let bbox = bbox_from_surface_tree(surface, (0, 0)).to_f64();
+        geometry.loc += bbox.loc;
+        geometry.size = bbox.size;
+    }
+    let geometry = geometry.to_physical_precise_round(scale).to_logical(scale);
+    if geometry.is_empty() {
+        return;
+    }
+
+    with_states(surface, |states| {
+        if surface_geo(states).is_none() {
+            return;
+        }
+
+        let shadow = states
+            .data_map
+            .get_or_insert(|| RefCell::new(Shadow::new(config)));
+        let mut shadow = shadow.borrow_mut();
+        shadow.update_config(config);
+        shadow.update_render_elements(
+            geometry.size,
+            is_active,
+            rules.geometry_corner_radius.unwrap_or_default(),
+            scale,
+            alpha,
+        );
+        shadow.render(renderer, geometry.loc, push);
+    });
+}
 
 #[derive(Debug)]
 pub struct Shadow {

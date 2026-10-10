@@ -24,7 +24,7 @@ use wayland_backend::server::Credentials;
 use super::{ResolvedWindowRules, WindowRef};
 use crate::handlers::KdeDecorationsModeState;
 use crate::layout::{
-    ConfigureIntent, InteractiveResizeData, LayoutElement, LayoutElementRenderElement,
+    shadow, ConfigureIntent, InteractiveResizeData, LayoutElement, LayoutElementRenderElement,
     LayoutElementRenderSnapshot, SizingMode,
 };
 use crate::niri_render_elements;
@@ -108,6 +108,9 @@ pub struct Mapped {
 
     /// The blur config, passed for background effect rendering.
     blur_config: niri_config::Blur,
+
+    /// The base shadow config, passed for popup shadow rendering.
+    shadow_config: niri_config::Shadow,
 
     /// Whether the next configure should be animated, if the configured state changed.
     animate_next_configure: bool,
@@ -293,6 +296,7 @@ impl Mapped {
             ignore_opacity_window_rule: false,
             block_out_buffer: RefCell::new(SolidColorBuffer::new((0., 0.), [0., 0., 0., 1.])),
             blur_config: config.blur,
+            shadow_config: config.layout.shadow,
             animate_next_configure: false,
             animate_serials: Vec::new(),
             animation_snapshot: None,
@@ -626,8 +630,13 @@ impl LayoutElement for Mapped {
         &self.window
     }
 
-    fn update_config(&mut self, blur_config: niri_config::Blur) {
+    fn update_config(
+        &mut self,
+        blur_config: niri_config::Blur,
+        shadow_config: niri_config::Shadow,
+    ) {
         self.blur_config = blur_config;
+        self.shadow_config = shadow_config;
     }
 
     fn size(&self) -> Size<i32, Logical> {
@@ -714,6 +723,18 @@ impl LayoutElement for Mapped {
             );
 
             let geometry = Rectangle::new(location + offset.to_f64(), popup_geo.size.to_f64());
+            shadow::render_for_popup(
+                ctx.renderer,
+                surface,
+                geometry,
+                scale.x,
+                alpha,
+                self.is_focused,
+                self.shadow_config,
+                popup_rules,
+                &mut |elem| push(elem.into()),
+            );
+
             let surface_off = popup_geo.loc.upscale(-1).to_f64();
             let surface_anim_scale = Scale::from(1.);
             let mut effect = popup_rules.background_effect;

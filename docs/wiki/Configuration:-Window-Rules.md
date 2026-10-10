@@ -113,6 +113,10 @@ window-rule {
         opacity 0.5
         geometry-corner-radius 15
 
+        shadow {
+            on
+        }
+
         background-effect {
             xray true
             blur true
@@ -1026,6 +1030,11 @@ The properties work the same way as the corresponding window-rule properties, ex
 
 `opacity` is applied *on top* of the layer surface's own opacity rule, so setting both will make pop-ups more transparent than the surface.
 Other properties apply independently.
+
+Popup shadows are disabled by default. Enable them with `popups { shadow { on; } }`.
+The `shadow` block accepts the same options as the [layout shadow](./Configuration:-Layout.md#shadow) and inherits its settings, except for `on`.
+The shadow follows the popup's geometry and `geometry-corner-radius`, and its opacity includes the popup's opacity.
+For window popups, `inactive-color` applies when the parent window is not focused.
 
 > [!NOTE]
 > This block affects only pop-ups created by the app via Wayland's [xdg-popup](https://wayland.app/protocols/xdg-shell#xdg_popup) (which should be most of them).
